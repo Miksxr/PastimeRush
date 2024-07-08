@@ -89,7 +89,7 @@ fun MoodJournalScreen(viewModel: MoodViewModel) {
                     textStyle = TextStyle(color = Color.White),
                     modifier = Modifier
                         .weight(1f)
-                        .padding(end = 8.dp),
+                        .padding(end = 8.dp)
                 )
                 Button(onClick = {
                     showTimePicker(context) { time ->
