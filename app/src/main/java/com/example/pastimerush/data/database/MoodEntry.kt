@@ -1,4 +1,4 @@
-package com.example.pastimerush.database
+package com.example.pastimerush.data.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -7,5 +7,7 @@ import androidx.room.PrimaryKey
 data class MoodEntry(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val date: String,
-    val mood: String
+    val time: String,
+    val mood: String,
+    val note: String
 )

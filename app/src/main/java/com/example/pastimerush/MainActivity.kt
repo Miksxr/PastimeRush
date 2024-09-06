@@ -6,30 +6,32 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.room.Room
-import com.example.pastimerush.database.MoodDatabase
 import com.example.pastimerush.ui.theme.PastimeRushTheme
-import com.example.pastimerush.viewmodel.MoodRepository
 import com.example.pastimerush.viewmodel.MoodViewModel
-import com.example.pastimerush.viewmodel.MoodViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: MoodViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db = Room.databaseBuilder(
-            applicationContext,
-            MoodDatabase::class.java, "mood-database"
-        ).build()
-        val repository = MoodRepository(db.moodEntryDao())
-        val viewModelFactory = MoodViewModelFactory(repository)
-        val viewModel: MoodViewModel by viewModels { viewModelFactory }
-
         setContent {
             PastimeRushTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    MoodJournalScreen(viewModel)
+                    AppNavigation(viewModel)
                 }
             }
         }
     }
 }
+
+/**
+ * 1. Добавить Hilt(Убрать Factory)
+ * 2. Добавить Kotlin DateTime и поменять moodEntry Date -> Instant(+ Конвертор)
+ * 3. Создать отдельный экран CreateMood (Поддержать выбор настроения, даты и заметки)
+ * 4. Сделать редактирование и удаление заметки
+ * 5. Navigation
+ * 6. Почитать про корутины
+ */

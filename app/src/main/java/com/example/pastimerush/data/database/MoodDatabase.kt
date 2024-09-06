@@ -1,4 +1,4 @@
-package com.example.pastimerush.database
+package com.example.pastimerush.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
