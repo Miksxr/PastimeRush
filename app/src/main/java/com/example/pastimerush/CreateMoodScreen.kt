@@ -7,6 +7,7 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import kotlinx.datetime.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,12 +33,16 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun CreateMoodScreen(viewModel: MoodViewModel, onMoodSaved: () -> Unit) {
     var selectedMood by remember { mutableStateOf<Mood?>(null) }
-    var dateText by remember { mutableStateOf(TextFieldValue("")) }
-    var timeText by remember { mutableStateOf(TextFieldValue("")) }
+    var timestamp by remember { mutableStateOf(Clock.System.now()) }
     var noteText by remember { mutableStateOf(TextFieldValue("")) }
     val context = LocalContext.current
 
@@ -61,8 +66,10 @@ fun CreateMoodScreen(viewModel: MoodViewModel, onMoodSaved: () -> Unit) {
         ) {
             Button(
                 onClick = {
-                    showDatePicker(context) { date ->
-                        dateText = TextFieldValue(date)
+                    showDatePicker(context, timestamp.toLocalDateTime(TimeZone.currentSystemDefault()).date) { date ->
+                        val localDateTime = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+                        timestamp = LocalDateTime(date.year, date.monthNumber, date.dayOfMonth, localDateTime.hour, localDateTime.minute)
+                            .toInstant(TimeZone.currentSystemDefault())
                     }
                 },
                 modifier = Modifier
@@ -74,8 +81,10 @@ fun CreateMoodScreen(viewModel: MoodViewModel, onMoodSaved: () -> Unit) {
 
             Button(
                 onClick = {
-                    showTimePicker(context) { time ->
-                        timeText = TextFieldValue(time)
+                    showTimePicker(context, timestamp.toLocalDateTime(TimeZone.currentSystemDefault()).time) { time ->
+                        val localDateTime = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+                        timestamp = LocalDateTime(localDateTime.date, time)
+                            .toInstant(TimeZone.currentSystemDefault())
                     }
                 },
                 modifier = Modifier
@@ -85,6 +94,7 @@ fun CreateMoodScreen(viewModel: MoodViewModel, onMoodSaved: () -> Unit) {
                 Text("Выбрать время")
             }
         }
+
 
         Text(
             text = "Выберите настроение:",
@@ -107,18 +117,15 @@ fun CreateMoodScreen(viewModel: MoodViewModel, onMoodSaved: () -> Unit) {
 
         Button(
             onClick = {
-                if (selectedMood != null && dateText.text.isNotEmpty() && timeText.text.isNotEmpty()) {
+                if (selectedMood != null) {
                     viewModel.addMoodEntry(
                         MoodEntry(
-                            date = dateText.text,
-                            time = timeText.text,
+                            timestamp = timestamp,
                             mood = selectedMood!!.name,
                             note = noteText.text
                         )
                     )
                     selectedMood = null
-                    dateText = TextFieldValue("")
-                    timeText = TextFieldValue("")
                     noteText = TextFieldValue("")
                     onMoodSaved()
                 }
@@ -164,17 +171,17 @@ enum class Mood(val drawableRes: Int) {
 }
 
 @SuppressLint("NewApi")
-private fun showDatePicker(context: Context, onDateSelected: (String) -> Unit) {
+fun showDatePicker(context: Context, initialDate: LocalDate, onDateSelected: (LocalDate) -> Unit) {
     val datePickerDialog = DatePickerDialog(context, { _, year, month, dayOfMonth ->
-        onDateSelected("$dayOfMonth/${month + 1}/$year")
-    }, 2024, 7, 17)
+        onDateSelected(LocalDate(year, month + 1, dayOfMonth))
+    }, initialDate.year, initialDate.monthNumber - 1, initialDate.dayOfMonth)
     datePickerDialog.show()
 }
 
 @SuppressLint("NewApi")
-private fun showTimePicker(context: Context, onTimeSelected: (String) -> Unit) {
+fun showTimePicker(context: Context, initialTime: LocalTime, onTimeSelected: (LocalTime) -> Unit) {
     val timePickerDialog = TimePickerDialog(context, { _, hourOfDay, minute ->
-        onTimeSelected("$hourOfDay:$minute")
-    }, 12, 0, true)
+        onTimeSelected(LocalTime(hourOfDay, minute))
+    }, initialTime.hour, initialTime.minute, true)
     timePickerDialog.show()
 }

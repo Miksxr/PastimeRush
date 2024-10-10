@@ -2,6 +2,8 @@ package com.example.pastimerush
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import kotlinx.datetime.*
+import kotlinx.datetime.TimeZone
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -105,8 +107,12 @@ fun MoodJournalScreen(viewModel: MoodViewModel, onAddMoodClick: () -> Unit) {
                             Spacer(modifier = Modifier.width(16.dp))
 
                             Column {
+                                // Преобразуем timestamp обратно в LocalDateTime
+                                val localDateTime = moodEntry.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+
+                                // Отображаем дату и время
                                 Text(
-                                    text = "${moodEntry.date} ${moodEntry.time}",
+                                    text = "${localDateTime.date} ${localDateTime.time}",
                                     color = Color.Black,
                                     style = TextStyle(fontSize = 16.sp)
                                 )
@@ -120,6 +126,7 @@ fun MoodJournalScreen(viewModel: MoodViewModel, onAddMoodClick: () -> Unit) {
                     }
                 }
             }
+
 
             Button(
                 onClick = onAddMoodClick,
@@ -140,25 +147,49 @@ fun EditMoodDialog(
     onSave: (MoodEntry) -> Unit,
     onDelete: (MoodEntry) -> Unit
 ) {
-    var dateText by remember { mutableStateOf(TextFieldValue(moodEntry.date)) }
-    var timeText by remember { mutableStateOf(TextFieldValue(moodEntry.time)) }
+    var timestamp by remember { mutableStateOf(moodEntry.timestamp) }
     var noteText by remember { mutableStateOf(TextFieldValue(moodEntry.note)) }
+
+    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Редактировать запись") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = dateText,
-                    onValueChange = { dateText = it },
-                    label = { Text("Дата") }
-                )
-                OutlinedTextField(
-                    value = timeText,
-                    onValueChange = { timeText = it },
-                    label = { Text("Время") }
-                )
+                Button(onClick = {
+                    // Преобразуем timestamp в LocalDateTime для работы с датой и временем
+                    val localDateTime = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+
+                    showDatePicker(context, localDateTime.date) { date ->
+                        // Обновляем timestamp с новой датой, сохраняя текущее время
+                        timestamp = LocalDateTime(
+                            date.year,
+                            date.monthNumber,
+                            date.dayOfMonth,
+                            localDateTime.hour,
+                            localDateTime.minute
+                        )
+                            .toInstant(TimeZone.currentSystemDefault())
+                    }
+                }) {
+                    Text("Выбрать дату")
+                }
+
+                Button(onClick = {
+                    val localDateTime = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+
+                    showTimePicker(context, localDateTime.time) { time ->
+                        // Обновляем timestamp с новым временем, сохраняя текущую дату
+                        timestamp = LocalDateTime(
+                            localDateTime.date,
+                            time
+                        ).toInstant(TimeZone.currentSystemDefault())
+                    }
+                }) {
+                    Text("Выбрать время")
+                }
+
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
@@ -170,8 +201,7 @@ fun EditMoodDialog(
             Button(
                 onClick = {
                     val updatedEntry = moodEntry.copy(
-                        date = dateText.text,
-                        time = timeText.text,
+                        timestamp = timestamp,
                         note = noteText.text
                     )
                     onSave(updatedEntry)
@@ -183,7 +213,7 @@ fun EditMoodDialog(
         dismissButton = {
             Button(
                 onClick = { onDelete(moodEntry) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Заменили backgroundColor на containerColor
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
             ) {
                 Text("Удалить")
             }
