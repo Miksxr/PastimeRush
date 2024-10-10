@@ -139,7 +139,7 @@ fun MoodSelector(selectedMood: Mood?, onMoodSelected: (Mood) -> Unit) {
             .padding(bottom = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Mood.values().forEach { mood ->
+        Mood.entries.forEach { mood ->
             Image(
                 painter = painterResource(id = mood.drawableRes),
                 contentDescription = mood.name,
